@@ -1,0 +1,35 @@
+name: Auto Scrape and Update
+
+# 毎日日本時間の朝7時に自動実行する（UTCの22:00 = JSTの7:00）
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch: # 手動でもボタン一つで動かせるようにする設定
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 倉庫のコードを手元に持ってくる
+        uses: actions/checkout@v3
+
+      - name: Pythonの環境を準備する
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 必要なライブラリ（BeautifulSoup）を入れる
+        run: |
+          pip install beautifulsoup4
+
+      - name: 自動巡回スクリプトを実行する
+        run: |
+          python scrape.py
+
+      - name: 更新されたデータベースを自動でGitHubにセーブする
+        run: |
+          git config --global user.name "Auto Bot"
+          git config --global user.email "bot@example.com"
+          git add knowledge_hub.db
+          git commit -m "🤖 自動アップデート: データベースを更新しました" || exit 0
+          git push
